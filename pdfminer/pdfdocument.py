@@ -98,12 +98,11 @@ class PDFXRef(PDFBaseXRef):
         while True:
             try:
                 (pos, line) = parser.nextline()
-                if not line.strip():
+                line = line.strip()
+                if not line:
                     continue
             except PSEOF:
                 raise PDFNoValidXRef('Unexpected EOF - file corrupted?')
-            if not line:
-                raise PDFNoValidXRef('Premature eof: %r' % parser)
             if line.startswith(b'trailer'):
                 parser.seek(pos)
                 break
