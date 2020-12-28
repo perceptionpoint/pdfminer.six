@@ -105,7 +105,7 @@ def dumpallobjs(out, doc, codec=None):
             try:
                 obj = doc.getobj(objid)
                 if obj is None: continue
-                out.write('<object id="%d">\n' % objid)
+                out.write('<object id="{}">\n'.format(objid))
                 dumpxml(out, obj, codec=codec)
                 out.write('\n</object>\n\n')
             except PDFObjectNotFound as e:
