@@ -189,7 +189,16 @@ class PDFXRefFallback(PDFXRef):
             (objid, genno) = m.groups()
             objid = int(objid)
             genno = int(genno)
-            self.offsets[objid] = (None, pos, genno)
+
+            # PDFXRefFallback parses objects without relying on the XREF table
+            # However, since self.offsets is a dict, if two objects have the same ID, it will only parse one of them.
+            # So here we're adding support for parsing objects with identical IDs
+            sn = 0
+            if objid in self.offsets:
+                sn += 1
+                self.offsets["{}_{}".format(objid, sn)] = (None, pos, genno)
+            else:
+                self.offsets[objid] = (None, pos, genno)
             # expand ObjStm.
             parser.seek(pos)
             (_, obj) = parser.nextobject()
@@ -587,7 +596,7 @@ class PDFDocument(object):
             if settings.STRICT:
                 raise PDFSyntaxError('Catalog not found!')
         return
-    
+
     KEYWORD_OBJ = KWD(b'obj')
 
     # _initialize_password(password=b'')
