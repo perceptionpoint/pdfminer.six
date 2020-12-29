@@ -180,7 +180,11 @@ class PDFXRefFallback(PDFXRef):
                 parser.seek(pos)
                 self.load_trailer(parser)
                 log.info('trailer: %r', self.trailer)
-                break
+                # some pdfs have more than one trailer, so removing 'break'.
+                # if we see this causes problems, we might need to think of another solution
+                # we're leaving it in the classic PDFXRef because we're using only this fallback class
+                # as a raw, greedy parser
+                # break
             if six.PY3:
                 line=line.decode('latin-1') #default pdf encoding
             m = self.PDFOBJ_CUE.match(line)
@@ -661,17 +665,21 @@ class PDFDocument(object):
         # copied from https://github.com/jaepil/pdfminer3k/blob/master/pdfminer/pdfparser.py#L399
         #to solve https://github.com/pdfminer/pdfminer.six/issues/56
         #assert objid1 == objid, str((objid1, objid))
-        if objid1 != objid:
-            x = []
-            while kwd is not self.KEYWORD_OBJ:
-                (_,kwd) = self._parser.nexttoken()
-                x.append(kwd)
-            if x:
-                objid1 = x[-2]
-                genno = x[-1]
-        # #### end hack around malformed pdf files
-        if objid1 != objid:
-            raise PDFSyntaxError('objid mismatch: %r=%r' % (objid1, objid))
+
+        # for objects with identical IDs we changed ID 3 to ID "3_1" etc. so the actual ID in the file (objid1)
+        # will still be 3, while our key (objid) is "3_X". In this case - continue parsing
+        if objid1 != int(str(objid).split("_")[0]):
+            if objid1 != objid:
+                x = []
+                while kwd is not self.KEYWORD_OBJ:
+                    (_,kwd) = self._parser.nexttoken()
+                    x.append(kwd)
+                if x:
+                    objid1 = x[-2]
+                    genno = x[-1]
+            # #### end hack around malformed pdf files
+            if objid1 != objid:
+                raise PDFSyntaxError('objid mismatch: %r=%r' % (objid1, objid))
 
         if kwd != KWD(b'obj'):
             raise PDFSyntaxError('Invalid object spec: offset=%r' % pos)

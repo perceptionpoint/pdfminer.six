@@ -78,7 +78,7 @@ class PDFPage(object):
     INHERITABLE_ATTRS = set(['Resources', 'MediaBox', 'CropBox', 'Rotate'])
 
     @classmethod
-    def create_pages(klass, document):
+    def create_pages(klass, document, fallback=False):
         def search(obj, parent):
             if isinstance(obj, int):
                 objid = obj
@@ -107,7 +107,7 @@ class PDFPage(object):
             for (objid, tree) in search(document.catalog['Pages'], document.catalog):
                 yield klass(document, objid, tree)
                 pages = True
-        if not pages:
+        if not pages or fallback:
             # fallback when /Pages is missing.
             for xref in document.xrefs:
                 for objid in xref.get_objids():
