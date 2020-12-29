@@ -171,6 +171,7 @@ class PDFXRefFallback(PDFXRef):
 
     def load(self, parser):
         parser.seek(0)
+        sn = 0
         while 1:
             try:
                 (pos, line) = parser.nextline()
@@ -197,7 +198,6 @@ class PDFXRefFallback(PDFXRef):
             # PDFXRefFallback parses objects without relying on the XREF table
             # However, since self.offsets is a dict, if two objects have the same ID, it will only parse one of them.
             # So here we're adding support for parsing objects with identical IDs
-            sn = 0
             if objid in self.offsets:
                 sn += 1
                 self.offsets["{}_{}".format(objid, sn)] = (None, pos, genno)
