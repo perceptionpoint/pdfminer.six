@@ -78,7 +78,7 @@ class PDFPage(object):
     INHERITABLE_ATTRS = set(['Resources', 'MediaBox', 'CropBox', 'Rotate'])
 
     @classmethod
-    def create_pages(klass, document, fallback=False):
+    def create_pages(klass, document, ignore_catalog=False):
         def search(obj, parent):
             if isinstance(obj, int):
                 objid = obj
@@ -107,7 +107,7 @@ class PDFPage(object):
             for (objid, tree) in search(document.catalog['Pages'], document.catalog):
                 yield klass(document, objid, tree)
                 pages = True
-        if not pages or fallback:
+        if not pages or ignore_catalog:
             # fallback when /Pages is missing.
             for xref in document.xrefs:
                 for objid in xref.get_objids():
@@ -122,7 +122,7 @@ class PDFPage(object):
     @classmethod
     def get_pages(klass, fp,
                   pagenos=None, maxpages=0, password='',
-                  caching=True, check_extractable=True):
+                  caching=True, check_extractable=True, ignore_catalog=False):
         # Create a PDF parser object associated with the file object.
         parser = PDFParser(fp)
         # Create a PDF document object that stores the document structure.
@@ -131,7 +131,7 @@ class PDFPage(object):
         if check_extractable and not doc.is_extractable:
             raise PDFTextExtractionNotAllowed('Text extraction is not allowed: %r' % fp)
         # Process each page contained in the document.
-        for (pageno, page) in enumerate(klass.create_pages(doc)):
+        for (pageno, page) in enumerate(klass.create_pages(doc, ignore_catalog)):
             if pagenos and (pageno not in pagenos):
                 continue
             yield page
