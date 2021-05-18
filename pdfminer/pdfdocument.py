@@ -557,7 +557,7 @@ class PDFDocument(object):
         self.caching = caching
         self.xrefs = []
         self.info = []
-        self.catalog = None
+        self.catalog = {}
         self.encryption = None
         self.decipher = None
         self._parser = None
@@ -594,8 +594,12 @@ class PDFDocument(object):
                 # Every PDF file must have exactly one /Root dictionary.
                 self.catalog = dict_value(trailer['Root'])
                 break
-        else:
-            raise PDFSyntaxError('No /Root object! - Is this really a PDF?')
+        # Removing the else since we can also fall back on parsing 
+        # objects directly (i.e. not through the catalog).
+        # If we see this causes other more numerous errors, we can
+        # use `mutool clean pdf_file` command to write a fixed pdf and re-run scan on it
+        # else:
+        #     raise PDFSyntaxError('No /Root object! - Is this really a PDF?')
         if self.catalog.get('Type') is not LITERAL_CATALOG:
             if settings.STRICT:
                 raise PDFSyntaxError('Catalog not found!')
